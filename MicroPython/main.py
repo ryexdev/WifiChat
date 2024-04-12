@@ -3,12 +3,11 @@ import socket
 import json
 
 # Configure ESP32 as an Access Point
-ssid = 'ESP32-ChatRoom'
-password = '123456789'  # Consider using a more secure password
+ssid = 'Chat Room'
 
 ap = network.WLAN(network.AP_IF)
 ap.active(True)
-ap.config(essid=ssid, password=password, authmode=network.AUTH_WPA_WPA2_PSK)
+ap.config(essid=ssid, authmode=network.AUTH_OPEN)
 
 messages = []  # Store messages along with usernames
 
@@ -22,11 +21,11 @@ def start_server():
     
     while True:
         cl, addr = s.accept()
-        print('Client connected from', addr)
+        #print('Client connected from', addr)
         client_ip = str(addr[0])  # Extract client IP
         username = "User" + client_ip.replace('.', '_')  # Generate username based on IP
         request = cl.recv(1024).decode('utf-8')
-        print('Request:', request)
+        #print('Request:', request)
         
         if 'GET /messages' in request:
             cl.send('HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n')
@@ -52,19 +51,19 @@ def serve_chat_room_page(client):
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; }
-#chat { background-color: #333; color: #fff; border-radius: 8px; padding: 10px; width: 100%; max-width: 600px; height: 300px; overflow-y: auto; margin-bottom: 20px; }
+#chat { background-color: #e6e6e6; color: #333; border-radius: 8px; padding: 10px; width: 100%; max-width: 600px; height: 300px; overflow-y: auto; margin-bottom: 20px; }
 input[type=text], button { border-radius: 5px; padding: 10px; font-size: 16px; }
 input[type=text] { border: 1px solid #ccc; width: calc(100% - 120px); margin-right: 10px; }
 button { background-color: #007bff; color: white; border: none; cursor: pointer; }
 button:hover { background-color: #0056b3; }
 @media (max-width: 600px) {
-    body { padding: 10px; }
+    body { padding: 15px; }
     input[type=text], button { width: 100%; margin-top: 5px; }
 }
 </style>
 </head>
 <body>
-<h2>Welcome to the ESP32 Chat Room</h2>
+<h2>Temporary Chat</h2>
 <div id="chat"></div>
 <input type="text" id="message" placeholder="Type a message...">
 <button onclick="sendMessage()">Send</button>
