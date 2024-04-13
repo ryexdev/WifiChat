@@ -1,15 +1,22 @@
 import network
 import socket
 import json
+import esp32
+import mdns
 
 # Configure ESP32 as an Access Point
-ssid = 'Chat Room'
+ssid = 'Navigate to esp32.local'
 
 ap = network.WLAN(network.AP_IF)
 ap.active(True)
 ap.config(essid=ssid, authmode=network.AUTH_OPEN)
 
 messages = []  # Store messages along with usernames
+
+# Initialize mDNS
+mdns = network.mDNS()
+mdns.start('esp32', 'ESP32 Web Server')
+mdns.addService('_http', '_tcp', 80)
 
 # Start the Web Server
 def start_server():
@@ -21,11 +28,8 @@ def start_server():
     
     while True:
         cl, addr = s.accept()
-        #print('Client connected from', addr)
         client_ip = str(addr[0])  # Extract client IP
-        username = "User" + client_ip.replace('.', '_')  # Generate username based on IP
         request = cl.recv(1024).decode('utf-8')
-        #print('Request:', request)
         
         if 'GET /messages' in request:
             cl.send('HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n')
@@ -33,9 +37,9 @@ def start_server():
         elif 'POST /message' in request:
             content_length = int(request.split('Content-Length: ')[1].split('\r\n')[0])
             post_body_raw = request.split('\r\n\r\n')[1][:content_length]
-            post_body = json.loads(post_body_raw)  # Parse the JSON string to a Python dictionary
-            message_content = post_body['message']  # Extract the message content
-            messages.append(client_ip + ": " + message_content)  # Append IP address and message
+            post_body = json.loads(post_body_raw)
+            message_content = post_body['message']
+            messages.append(client_ip + ": " + message_content)
             cl.send('HTTP/1.1 200 OK\r\n\r\n')
         else:
             serve_chat_room_page(cl)
@@ -76,7 +80,7 @@ function updateScroll(){
 setInterval(function() {
     fetch('/messages').then(response => response.json()).then(data => {
         var formattedMessages = data.map(function(message) {
-            return '<p>' + message.replace(' - ', ': ') + '</p>'; // Display username: message
+            return '<p>' + message.replace(' - ', ': ') + '</p>';
         });
         document.getElementById('chat').innerHTML = formattedMessages.join('');
         updateScroll();
